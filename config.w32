@@ -1,0 +1,7 @@
+ARG_ENABLE('di', 'di support', 'no');
+
+if (PHP_DI != 'no') {
+	AC_DEFINE('HAVE_DI', 1, 'di support enabled');
+
+	EXTENSION('di', 'di.c', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+}
