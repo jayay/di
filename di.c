@@ -6,7 +6,7 @@
 
 #include "php.h"
 #include "ext/standard/info.h"
-#include "Zend/zend_interfaces.h"
+#include "zend_interfaces.h"
 #include "php_di.h"
 
 /* For compatibility with older PHP versions */
@@ -16,7 +16,11 @@
 	ZEND_PARSE_PARAMETERS_END()
 #endif
 
+
 zend_class_entry *di_ce_interface, *di_ce_container;
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_di_container_method_construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_di_method_get, 0, 0, 1)
 	ZEND_ARG_TYPE_INFO(0, class_name, IS_STRING, 0)
@@ -32,15 +36,100 @@ static const zend_function_entry di_container_interface[] = {
 	PHP_FE_END
 };
 
-static void dicontainer_ctor(INTERNAL_FUNCTION_PARAMETERS)
-{
-	// TODO: init empty array
-}
-
 PHP_METHOD(DIContainer, __construct)
 {
+	//Z_OBJ_HT_P(return_value)->
+
+	//array_init_size();
+}
+
+// see https://github.com/php/php-src/blob/648be8600ff89e1b0e4a4ad25cebad42b53bed6d/ext/reflection/php_reflection.c#L4691
+PHP_METHOD(DIContainer, get)
+{
+	zend_class_entry *class_subject;
+	zend_string* cf;
+	HashTable *myht;
+
+	ZEND_PARSE_PARAMETERS_START(1,1)
+		Z_PARAM_STR(cf)
+	ZEND_PARSE_PARAMETERS_END();
+
+	if ((class_subject = zend_lookup_class(cf)) == NULL) {
+		RETURN_NULL();
+		//zend_throw_exception_ex(reflection_exception_ptr, 0,
+		//		"Class %s does not exist", ZSTR_VAL(name));
+		//zend_string_release(name); // do again after throw
+		//RETURN_THROWS();
+	}
+
+	uint32_t req_num_args = class_subject->constructor->common.required_num_args;
+
+	if (class_subject->constructor) {
+		if (class_subject->constructor->common.fn_flags & ZEND_ACC_ABSTRACT) {
+			// throw exception (method is abstract)
+			RETURN_LONG(2);
+		}
+
+		if (!(class_subject->constructor->common.fn_flags & ZEND_ACC_PUBLIC)) {
+			// throw exception (constructor is private)
+			RETURN_LONG(3);
+		}
+
+	}
+
+
+	if (UNEXPECTED(object_init_ex(return_value, class_subject) != SUCCESS)) {
+		RETURN_LONG(4);
+	}
+
+	//return return_value;
+	//RETURN_OBJ(return_value);
+	//return_value = (&EX(This));
+}
+
+static int resolve_build_dependencies(zend_class_entry* ce, uint32_t nesting_limit, HashTable* storage)
+{
+	zend_string* dependency_str;
+	zend_class_entry* sub_entry;
+	zval value;
+	uint32_t req_num_args, i;
+
+	if (nesting_limit == 0) {
+		return -3;
+	}
+
+	req_num_args = ce->constructor->common.required_num_args;
+	for (i = 0; i < req_num_args; i++) {
+		zend_type type = ce->constructor->common.arg_info[i].type;
+		if (!ZEND_TYPE_IS_CLASS(type)) {
+			return -1;
+		}
+		dependency_str = ce->constructor->common.arg_info[i].name;
+
+		if ((sub_entry = zend_lookup_class(dependency_str)) == NULL) {
+			return -2;
+		}
+
+		ZVAL_NULL(&value);
+		zend_hash_update(storage, dependency_str, &value);
+		
+		//zend_update_property_ex()
+	}
+	return 0;
+}
+
+PHP_METHOD(DIContainer, withInstances)
+{
 
 }
+
+static const zend_function_entry di_container_impl[] = {
+	PHP_ME(DIContainer,			__construct,		arginfo_di_container_method_construct, ZEND_ACC_PUBLIC)
+	PHP_ME(DIContainer, get,	arginfo_di_method_get, ZEND_ACC_PUBLIC)
+	PHP_ME(DIContainer, withInstances,	arginfo_di_method_withInstances, ZEND_ACC_PUBLIC)
+	PHP_FE_END
+};
+
 
 /* {{{ void di_test1()
  */
@@ -88,13 +177,25 @@ PHP_RINIT_FUNCTION(di)
 PHP_MINIT_FUNCTION(di)
 {
 	zend_class_entry ce_container, ce_interface;
+	zval instances_val;
+	HashTable *myht;
+	ALLOC_HASHTABLE(myht); /* TODO: destroy & free */
+	zend_hash_init(myht, 1000, NULL, ZVAL_PTR_DTOR, 0);
+	ZVAL_ARR(&instances_val, myht);
+
 	INIT_CLASS_ENTRY(ce_interface, "DIContainerInterface", di_container_interface);
+	INIT_CLASS_ENTRY(ce_container, "DIContainer", di_container_impl);
 
 	di_ce_interface = zend_register_internal_interface(&ce_interface);
+	di_ce_container = zend_register_internal_class(&ce_container);
+	zend_class_implements(di_ce_container, 1, di_ce_interface);
+	//zend_declare_property(di_ce_container, "instances", sizeof("instances")-1, &instances_val, ZEND_ACC_PRIVATE);
 
 	return SUCCESS;
 }
 /* }}} */
+
+// todo: internal store
 
 /* {{{ PHP_MINFO_FUNCTION
  */

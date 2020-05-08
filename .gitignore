@@ -34,3 +34,10 @@ tests/*/*.exp
 tests/*/*.log
 tests/*/*.sh
 php_test_results_*.txt
+tests/*.diff
+tests/*.exp
+tests/*.log
+tests/*.out
+tests/*.php
+tests/*.sh
+
