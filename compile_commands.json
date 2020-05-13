@@ -1,0 +1,54 @@
+[
+ {
+  "directory": "/home/jakob/Development/github/di",
+  "arguments": [
+   "clang",
+   "-I.",
+   "-I/home/jakob/Development/github/php-src/ext/di",
+   "-DPHP_ATOM_INC",
+   "-I/home/jakob/Development/github/php-src/ext/di/include",
+   "-I/home/jakob/Development/github/php-src/ext/di/main",
+   "-I/home/jakob/Development/github/php-src/ext/di",
+   "-I/usr/include/php",
+   "-I/usr/include/php/main",
+   "-I/usr/include/php/TSRM",
+   "-I/usr/include/php/Zend",
+   "-I/usr/include/php/ext",
+   "-I/usr/include/php/ext/date/lib",
+   "-DHAVE_CONFIG_H",
+   "-g",
+   "-O2",
+   "-c",
+   "/home/jakob/Development/github/php-src/ext/di/di.c",
+   "-o",
+   "di.lo"
+  ],
+  "file": "/home/jakob/Development/github/php-src/ext/di/di.c"
+ },
+ {
+  "directory": "/home/jakob/Development/github/di",
+  "arguments": [
+   "clang",
+   "-I.",
+   "-I/home/jakob/Development/github/di",
+   "-DPHP_ATOM_INC",
+   "-I/home/jakob/Development/github/di/include",
+   "-I/home/jakob/Development/github/di/main",
+   "-I/home/jakob/Development/github/di",
+   "-I/usr/include/php",
+   "-I/usr/include/php/main",
+   "-I/usr/include/php/TSRM",
+   "-I/usr/include/php/Zend",
+   "-I/usr/include/php/ext",
+   "-I/usr/include/php/ext/date/lib",
+   "-DHAVE_CONFIG_H",
+   "-g",
+   "-O2",
+   "-c",
+   "/home/jakob/Development/github/di/di.c",
+   "-o",
+   "di.lo"
+  ],
+  "file": "/home/jakob/Development/github/di/di.c"
+ }
+]

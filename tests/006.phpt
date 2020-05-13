@@ -31,8 +31,7 @@ Class [ <internal:di> class DIContainer implements DIContainerInterface ] {
   - Static methods [0] {
   }
 
-  - Properties [1] {
-    Property [ <default> private $instances ]
+  - Properties [0] {
   }
 
   - Methods [3] {

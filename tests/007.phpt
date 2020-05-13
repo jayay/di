@@ -17,6 +17,6 @@ var_dump($di->get(A::class));
 
 ?>
 --EXPECT--
-NULL
+int(-20)
 object(A)#2 (0) {
 }
