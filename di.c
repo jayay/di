@@ -55,7 +55,6 @@ PHP_METHOD(DIContainer, get)
 {
 	zend_class_entry *class_subject;
 	zend_string* cf;
-    php_di_obj* php_di_obj;
 	int status;
 
 	ZEND_PARSE_PARAMETERS_START(1,1)
@@ -83,26 +82,30 @@ PHP_METHOD(DIContainer, get)
 
 	}
 
-    status = resolve_build_dependencies(class_subject, 100, getThis(), return_value);
+    status = resolve_build_dependencies(class_subject,
+            100, getThis(), return_value);
 
 	if (status != 0) {
 	    RETURN_LONG(status);
 	}
-
-    php_di_obj = Z_PHPDI_P(getThis());
 
     if (return_value == NULL) {
         RETURN_LONG(-11111);
     }
 }
 
-static int resolve_build_dependencies(zend_class_entry* ce, uint32_t nesting_limit, zval *this_ptr, zval* retval)
+static int resolve_build_dependencies(
+        zend_class_entry* ce,
+        uint32_t nesting_limit,
+        zval *this_ptr,
+        zval* retval)
 {
 	zend_class_entry* sub_entry;
+    zend_type type;
     php_di_obj *php_di_obj;
-    zval* find_res_tmp;
+    zval *find_res_tmp, *find_res, tmp, retval_o;
 	uint32_t req_num_args, i;
-	int sub_result;
+	int build_result, sub_result;
 
 	if (nesting_limit == 0) {
 		return -3;
@@ -112,15 +115,14 @@ static int resolve_build_dependencies(zend_class_entry* ce, uint32_t nesting_lim
 
     if ((find_res_tmp = zend_hash_find(php_di_obj->instances, ce->name)) != NULL) {
         if (Z_TYPE_P(find_res_tmp) == IS_OBJECT) {
-            return 0;
+            return SUCCESS;
         }
     }
 
 	if (ce->constructor) {
         req_num_args = ce->constructor->internal_function.required_num_args;
         for (i = 0; i < req_num_args; i++) {
-            zval tmp;
-            zend_type type = ce->constructor->internal_function.arg_info[i].type;
+            type = ce->constructor->internal_function.arg_info[i].type;
             if (!ZEND_TYPE_IS_CLASS(type)) {
                 return -1;
             }
@@ -129,27 +131,23 @@ static int resolve_build_dependencies(zend_class_entry* ce, uint32_t nesting_lim
                 return -2;
             }
 
-            zval* find_res = zend_hash_find(php_di_obj->instances, ZEND_TYPE_NAME(type));
+            find_res = zend_hash_find(php_di_obj->instances, ZEND_TYPE_NAME(type));
             if (find_res == NULL) {
                 zend_hash_add_empty_element(php_di_obj->instances, ZEND_TYPE_NAME(type));
 
-                if ((sub_result = resolve_build_dependencies(sub_entry, nesting_limit - 1, this_ptr, &tmp)) < 0) {
+                if ((sub_result = resolve_build_dependencies(
+                        sub_entry, nesting_limit - 1, this_ptr, &tmp)) < 0) {
                     return sub_result;
-                }
-            } else {
-                if (ZVAL_IS_NULL(find_res)) {
-                    // ok
                 }
             }
         }
     }
 
-	zval retval_o;
     if (UNEXPECTED(object_init_ex(&retval_o, ce) != SUCCESS)) {
         return -4;
     }
 
-    int build_result = 0;
+    build_result = SUCCESS;
 
     if (ce->constructor) {
         if (!(ce->constructor->internal_function.fn_flags & ZEND_ACC_PUBLIC)) {
@@ -159,15 +157,12 @@ static int resolve_build_dependencies(zend_class_entry* ce, uint32_t nesting_lim
         build_result = build_instance(ce, this_ptr, &retval_o);
     }
 
-    if (build_result != 0) {
-        return build_result;
+    if (build_result == SUCCESS) {
+        zend_hash_update(php_di_obj->instances, ce->name, &retval_o);
+        ZVAL_COPY(retval, &retval_o);
     }
 
-    zend_hash_update(php_di_obj->instances, ce->name, &retval_o);
-
-    ZVAL_COPY(retval, &retval_o);
-
-	return 0;
+    return build_result;
 }
 
 
