@@ -100,6 +100,7 @@ static int resolve_build_dependencies(zend_class_entry* ce, uint32_t nesting_lim
 {
 	zend_class_entry* sub_entry;
     php_di_obj *php_di_obj;
+    zval* find_res_tmp;
 	uint32_t req_num_args, i;
 	int sub_result;
 
@@ -108,6 +109,12 @@ static int resolve_build_dependencies(zend_class_entry* ce, uint32_t nesting_lim
 	}
 
     php_di_obj = Z_PHPDI_P(this_ptr);
+
+    if ((find_res_tmp = zend_hash_find(php_di_obj->instances, ce->name)) != NULL) {
+        if (Z_TYPE_P(find_res_tmp) == IS_OBJECT) {
+            return 0;
+        }
+    }
 
 	if (ce->constructor) {
         req_num_args = ce->constructor->internal_function.required_num_args;
