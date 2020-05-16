@@ -34,7 +34,7 @@ Class [ <internal:di> class DIContainer implements DIContainerInterface ] {
   - Properties [0] {
   }
 
-  - Methods [3] {
+  - Methods [4] {
     Method [ <internal:di, ctor> public method __construct ] {
 
       - Parameters [0] {
@@ -52,6 +52,13 @@ Class [ <internal:di> class DIContainer implements DIContainerInterface ] {
 
       - Parameters [1] {
         Parameter #0 [ <required> array $instances ]
+      }
+    }
+
+    Method [ <internal:di, prototype DIContainerInterface> public method withClassMap ] {
+
+      - Parameters [1] {
+        Parameter #0 [ <required> array $classmap ]
       }
     }
   }

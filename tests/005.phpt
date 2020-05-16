@@ -12,6 +12,7 @@ class A implements \DIContainerInterface
 {
     public function get(string $className) {}
     public function withInstances(array $instances) : DIContainerInterface {}
+    public function withClassMap(array $mapping) : DIContainerInterface {}
 }
 
 Reflection::export(new ReflectionClass(\DIContainerInterface::class));
@@ -34,7 +35,7 @@ Interface [ <internal:di> interface DIContainerInterface ] {
   - Properties [0] {
   }
 
-  - Methods [2] {
+  - Methods [3] {
     Method [ <internal:di> abstract public method get ] {
 
       - Parameters [1] {
@@ -46,6 +47,13 @@ Interface [ <internal:di> interface DIContainerInterface ] {
 
       - Parameters [1] {
         Parameter #0 [ <required> array $instances ]
+      }
+    }
+
+    Method [ <internal:di> abstract public method withClassMap ] {
+
+      - Parameters [1] {
+        Parameter #0 [ <required> array $classmap ]
       }
     }
   }

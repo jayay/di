@@ -37,17 +37,25 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_di_method_withInstances, 0, 0, 1)
 	ZEND_ARG_ARRAY_INFO(0, instances, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_di_method_withClassMap, 0, 0, 1)
+    ZEND_ARG_ARRAY_INFO(0, classmap, 0)
+ZEND_END_ARG_INFO()
+
 static const zend_function_entry di_container_interface[] = {
 	PHP_ABSTRACT_ME(DIContainerInterface, get, arginfo_di_method_get)
 	PHP_ABSTRACT_ME(DIContainerInterface, withInstances, arginfo_di_method_withInstances)
+    PHP_ABSTRACT_ME(DIContainerInterface, withClassMap, arginfo_di_method_withClassMap)
 	PHP_FE_END
 };
+
 
 PHP_METHOD(DIContainer, __construct)
 {
 	php_di_obj *php_di_obj;
     php_di_obj = Z_PHPDI_P(getThis());
-	ALLOC_HASHTABLE(php_di_obj->instances); // TODO: destroy & free
+	ALLOC_HASHTABLE(php_di_obj->classmap); // TODO: destroy & free
+    zend_hash_init(php_di_obj->classmap, 10, NULL, ZVAL_PTR_DTOR, 0);
+    ALLOC_HASHTABLE(php_di_obj->instances); // TODO: destroy & free
     zend_hash_init(php_di_obj->instances, 10, NULL, ZVAL_PTR_DTOR, 0);
 }
 
@@ -61,31 +69,11 @@ PHP_METHOD(DIContainer, get)
 		Z_PARAM_STR(cf)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if ((class_subject = zend_lookup_class(cf)) == NULL) {
-		RETURN_LONG(-20);
-		//zend_throw_exception_ex(reflection_exception_ptr, 0,
-		//		"Class %s does not exist", ZSTR_VAL(name));
-		//zend_string_release(name); // do again after throw
-		//RETURN_THROWS();
-	}
 
-	if (class_subject->constructor) {
-		if (class_subject->constructor->common.fn_flags & ZEND_ACC_ABSTRACT) {
-			// throw exception (method is abstract)
-			RETURN_LONG(2);
-		}
-
-		if (!(class_subject->constructor->common.fn_flags & ZEND_ACC_PUBLIC)) {
-			// throw exception (constructor is private)
-			RETURN_LONG(3);
-		}
-
-	}
-
-    status = resolve_build_dependencies(class_subject,
+    status = resolve_build_dependencies(cf,
             100, getThis(), return_value);
 
-	if (status != 0) {
+	if (status != SUCCESS) {
 	    RETURN_LONG(status);
 	}
 
@@ -95,12 +83,12 @@ PHP_METHOD(DIContainer, get)
 }
 
 static int resolve_build_dependencies(
-        zend_class_entry* ce,
+        zend_string* class,
         uint32_t nesting_limit,
         zval *this_ptr,
         zval* retval)
 {
-	zend_class_entry* sub_entry;
+	zend_class_entry *ce, *sub_entry;
     zend_type type;
     php_di_obj *php_di_obj;
     zval *find_res_tmp, *find_res, tmp, retval_o;
@@ -110,6 +98,27 @@ static int resolve_build_dependencies(
 	if (nesting_limit == 0) {
 		return -3;
 	}
+
+    if ((ce = find_class_entry_by_mapping_name(class, this_ptr)) == NULL) {
+        return -20;
+        //zend_throw_exception_ex(reflection_exception_ptr, 0,
+        //		"Class %s does not exist", ZSTR_VAL(name));
+        //zend_string_release(name); // do again after throw
+        //RETURN_THROWS();
+    }
+
+    if (ce->constructor) {
+        if (ce->constructor->common.fn_flags & ZEND_ACC_ABSTRACT) {
+            // throw exception (method is abstract)
+            return 2;
+        }
+
+        if (!(ce->constructor->common.fn_flags & ZEND_ACC_PUBLIC)) {
+            // throw exception (constructor is private)
+            return 3;
+        }
+
+    }
 
     php_di_obj = Z_PHPDI_P(this_ptr);
 
@@ -127,16 +136,16 @@ static int resolve_build_dependencies(
                 return -1;
             }
 
-            if ((sub_entry = zend_lookup_class(ZEND_TYPE_NAME(type))) == NULL) {
+            if ((sub_entry = find_class_entry_by_mapping_name(ZEND_TYPE_NAME(type), this_ptr)) == NULL) {
                 return -2;
             }
 
-            find_res = zend_hash_find(php_di_obj->instances, ZEND_TYPE_NAME(type));
+            find_res = zend_hash_find(php_di_obj->instances, sub_entry->name);
             if (find_res == NULL) {
-                zend_hash_add_empty_element(php_di_obj->instances, ZEND_TYPE_NAME(type));
+                zend_hash_add_empty_element(php_di_obj->instances, sub_entry->name);
 
                 if ((sub_result = resolve_build_dependencies(
-                        sub_entry, nesting_limit - 1, this_ptr, &tmp)) < 0) {
+                        sub_entry->name, nesting_limit - 1, this_ptr, &tmp)) < 0) {
                     return sub_result;
                 }
             }
@@ -225,7 +234,34 @@ static int build_instance(zend_class_entry *ce, zval *this_ptr, zval *new_obj)
         return -1;
     }
 
-    return 0;
+    return SUCCESS;
+}
+
+/* Advanced Interface */
+PHPAPI zval *php_di_instantiate(zend_class_entry *ce, zval *object) /* {{{ */
+{
+    object_init_ex(object, ce);
+    return object;
+} /* }}} */
+
+static zend_class_entry* find_class_entry_by_mapping_name(zend_string *class_name, zval *this_ptr)
+{
+    php_di_obj *php_di_obj;
+    zend_class_entry *result;
+    zval *hash_result;
+
+    php_di_obj = Z_PHPDI_P(this_ptr);
+
+    while (1) {
+        hash_result = zend_hash_find(php_di_obj->classmap, class_name);
+        if (hash_result == NULL) {
+            break;
+        }
+        class_name = Z_STR_P(hash_result);
+    }
+
+    result = zend_lookup_class(class_name);
+    return result;
 }
 
 PHP_METHOD(DIContainer, withInstances)
@@ -233,10 +269,31 @@ PHP_METHOD(DIContainer, withInstances)
 
 }
 
+PHP_METHOD(DIContainer, withClassMap)
+{
+    php_di_obj *old_obj;
+    php_di_obj *new_obj;
+    HashTable *classmap;
+
+    php_di_instantiate(di_ce_container, return_value);
+    old_obj = Z_PHPDI_P(getThis());
+    new_obj = Z_PHPDI_P(return_value);
+
+    ALLOC_HASHTABLE(new_obj->instances); // TODO: destroy & free
+    zend_hash_init(new_obj->instances, 10, NULL, ZVAL_PTR_DTOR, 0);
+
+    ZEND_PARSE_PARAMETERS_START(1,1)
+            Z_PARAM_ARRAY_HT((classmap))
+    ZEND_PARSE_PARAMETERS_END();
+
+    new_obj->classmap = classmap;
+}
+
 static const zend_function_entry di_container_impl[] = {
 	PHP_ME(DIContainer,			__construct,		arginfo_di_container_method_construct, ZEND_ACC_PUBLIC)
 	PHP_ME(DIContainer, get,	arginfo_di_method_get, ZEND_ACC_PUBLIC)
 	PHP_ME(DIContainer, withInstances,	arginfo_di_method_withInstances, ZEND_ACC_PUBLIC)
+	PHP_ME(DIContainer, withClassMap,	arginfo_di_method_withClassMap, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };
 
@@ -293,6 +350,16 @@ static zend_object *di_object_new_di(zend_class_entry *class_type) /* {{{ */
     return &intern->std;
 } /* }}} */
 
+static zend_object *di_object_clone_di(zval *this_ptr) /* {{{ */
+{
+    php_di_obj *old_obj = Z_PHPDI_P(this_ptr);
+    php_di_obj *new_obj = php_di_obj_from_obj(di_object_new_di(old_obj->std.ce));
+
+    zend_objects_clone_members(&new_obj->std, &old_obj->std);
+
+    return &new_obj->std;
+} /* }}} */
+
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(di)
@@ -308,6 +375,7 @@ PHP_MINIT_FUNCTION(di)
 	di_ce_container->create_object = di_object_new_di;
     memcpy(&di_object_handlers_di_container, &std_object_handlers, sizeof(zend_object_handlers));
     di_object_handlers_di_container.offset = XtOffsetOf(php_di_obj , std);
+    di_object_handlers_di_container.clone_obj = di_object_clone_di;
 
 	return SUCCESS;
 }
