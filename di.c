@@ -48,20 +48,42 @@ static const zend_function_entry di_container_interface[] = {
 	PHP_FE_END
 };
 
+static HashTable *get_default_entries_classmap()
+{
+    HashTable *ht;
+    ALLOC_HASHTABLE(ht);
+    zend_hash_init(ht, 1, NULL, ZVAL_PTR_DTOR, 0);
+    zval nameContainerZval;
+    zend_string *nameContainerInterface;
+    ZVAL_NEW_STR(&nameContainerZval, zend_string_init("DIContainer", strlen("DIContainer"), 0));
+    nameContainerInterface = zend_string_init("DIContainerInterface", strlen("DIContainerInterface"), 0);
+    zend_hash_add(ht, nameContainerInterface, &nameContainerZval);
+    zend_string_release(nameContainerInterface);
+    return ht;
+}
+
+static HashTable *get_default_entries_instances(zval *this_ptr)
+{
+    zval nameContainerZval;
+    HashTable *ht;
+    ALLOC_HASHTABLE(ht);
+    zend_hash_init(ht, 1, NULL, ZVAL_PTR_DTOR, 0);
+    Z_STR(nameContainerZval) = zend_string_init("DIContainer", strlen("DIContainer"), 0);
+    zend_hash_add(ht, Z_STR(nameContainerZval), this_ptr);
+    return ht;
+}
 
 PHP_METHOD(DIContainer, __construct)
 {
 	php_di_obj *php_di_obj;
     php_di_obj = Z_PHPDI_P(getThis());
-	ALLOC_HASHTABLE(php_di_obj->classmap); // TODO: destroy & free
-    zend_hash_init(php_di_obj->classmap, 10, NULL, ZVAL_PTR_DTOR, 0);
-    ALLOC_HASHTABLE(php_di_obj->instances); // TODO: destroy & free
-    zend_hash_init(php_di_obj->instances, 10, NULL, ZVAL_PTR_DTOR, 0);
+
+    php_di_obj->classmap = get_default_entries_classmap();
+    php_di_obj->instances = get_default_entries_instances(getThis());
 }
 
 PHP_METHOD(DIContainer, get)
 {
-	zend_class_entry *class_subject;
 	zend_string* cf;
 	int status;
 
@@ -124,6 +146,7 @@ static int resolve_build_dependencies(
 
     if ((find_res_tmp = zend_hash_find(php_di_obj->instances, ce->name)) != NULL) {
         if (Z_TYPE_P(find_res_tmp) == IS_OBJECT) {
+            ZVAL_COPY(retval, find_res_tmp);
             return SUCCESS;
         }
     }
@@ -193,7 +216,9 @@ static int build_instance(zend_class_entry *ce, zval *this_ptr, zval *new_obj)
     php_di_obj = Z_PHPDI_P(this_ptr);
 
     for (i = 0; i < num_args; i++) {
-        dependency_str = ZEND_TYPE_NAME(ce->constructor->internal_function.arg_info[i].type);
+        dependency_str = find_class_name_by_mapping_name(
+                ZEND_TYPE_NAME(ce->constructor->internal_function.arg_info[i].type),
+                this_ptr);
         zval *zval_result;
 
         if ((zval_result = zend_hash_find(php_di_obj->instances, dependency_str)) == NULL) {
@@ -244,10 +269,9 @@ PHPAPI zval *php_di_instantiate(zend_class_entry *ce, zval *object) /* {{{ */
     return object;
 } /* }}} */
 
-static zend_class_entry* find_class_entry_by_mapping_name(zend_string *class_name, zval *this_ptr)
+static zend_string *find_class_name_by_mapping_name(zend_string *class_name, zval *this_ptr)
 {
     php_di_obj *php_di_obj;
-    zend_class_entry *result;
     zval *hash_result;
 
     php_di_obj = Z_PHPDI_P(this_ptr);
@@ -259,10 +283,17 @@ static zend_class_entry* find_class_entry_by_mapping_name(zend_string *class_nam
         }
         class_name = Z_STR_P(hash_result);
     }
+    return class_name;
+}
 
+static zend_class_entry* find_class_entry_by_mapping_name(zend_string *class_name, zval *this_ptr)
+{
+    zend_class_entry *result;
+    class_name = find_class_name_by_mapping_name(class_name, this_ptr);
     result = zend_lookup_class(class_name);
     return result;
 }
+
 
 PHP_METHOD(DIContainer, withInstances)
 {
@@ -273,20 +304,23 @@ PHP_METHOD(DIContainer, withClassMap)
 {
     php_di_obj *old_obj;
     php_di_obj *new_obj;
-    HashTable *classmap;
+    HashTable *classmap, *default_classmap, *default_instances;
 
     php_di_instantiate(di_ce_container, return_value);
     old_obj = Z_PHPDI_P(getThis());
     new_obj = Z_PHPDI_P(return_value);
 
-    ALLOC_HASHTABLE(new_obj->instances); // TODO: destroy & free
-    zend_hash_init(new_obj->instances, 10, NULL, ZVAL_PTR_DTOR, 0);
-
     ZEND_PARSE_PARAMETERS_START(1,1)
             Z_PARAM_ARRAY_HT((classmap))
     ZEND_PARSE_PARAMETERS_END();
 
-    new_obj->classmap = classmap;
+
+    default_classmap = get_default_entries_classmap();
+    default_instances = get_default_entries_instances(getThis());
+
+    zend_hash_merge(default_classmap, classmap, zval_add_ref, 1);
+    new_obj->classmap = default_classmap;
+    new_obj->instances = default_instances;
 }
 
 static const zend_function_entry di_container_impl[] = {
