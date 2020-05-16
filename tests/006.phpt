@@ -8,7 +8,7 @@ if (!extension_loaded('di')) {
 ?>
 --FILE--
 <?php
-Reflection::export(new ReflectionClass(\DIContainer::class));
+echo strval(new ReflectionClass(\DIContainer::class));
 
 $di = new \DIContainer;
 
@@ -63,7 +63,6 @@ Class [ <internal:di> class DIContainer implements DIContainerInterface ] {
     }
   }
 }
-
 object(DIContainer)#1 (0) {
 }
 bool(true)

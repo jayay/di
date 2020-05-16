@@ -15,7 +15,7 @@ class A implements \DIContainerInterface
     public function withClassMap(array $mapping) : DIContainerInterface {}
 }
 
-Reflection::export(new ReflectionClass(\DIContainerInterface::class));
+echo strval(new ReflectionClass(\DIContainerInterface::class));
 $a = new A;
 var_dump($a instanceof \DIContainerInterface);
 var_dump(get_class($a));
@@ -58,6 +58,5 @@ Interface [ <internal:di> interface DIContainerInterface ] {
     }
   }
 }
-
 bool(true)
 string(1) "A"

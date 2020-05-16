@@ -415,8 +415,6 @@ PHP_MINIT_FUNCTION(di)
 }
 /* }}} */
 
-// todo: internal store
-
 /* {{{ PHP_MINFO_FUNCTION
  */
 PHP_MINFO_FUNCTION(di)
