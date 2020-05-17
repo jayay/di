@@ -1,5 +1,5 @@
 --TEST--
-DIContainer nested class expansion
+DIContainerNative nested class expansion
 --SKIPIF--
 <?php
 if (!extension_loaded('di')) {
@@ -29,11 +29,11 @@ class D {
     }
 }
 
-$di = new \DIContainer;
+$di = new \DIContainerNative;
 var_dump($di->get(C::class));
 var_dump($di->get(D::class));
 
-$di2 = new \DIContainer;
+$di2 = new \DIContainerNative;
 var_dump($di->get(C::class) === $di->get(C::class));
 var_dump($di->get(C::class) === $di2->get(C::class));
 ?>

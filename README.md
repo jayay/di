@@ -38,7 +38,7 @@ In order to build a class and its dependencies, use the `get` method:
 
 ```php
 <?php
-$di = new DIContainer;
+$di = new DIContainerNative;
 $app = $di->get(App::class);
 ```
 
@@ -46,14 +46,14 @@ To create a new dependency injection container and tell it to use the `DatabaseP
 
 ```php
 <?php
-$di = (new DIContainer)
+$di = (new DIContainerNative)
   ->withClassMap([
     Database::class => DatabasePG::class,
   ]);
 ```
 
-As soon as a new `DIContainer` gets instantiated, one default entry in the class mapping gets created:
-Interface `DIContainerInterface` points to the implementation `DIContainer`. The interface is defined as follows:
+As soon as a new `DIContainerNative` gets instantiated, one default entry in the class mapping gets created:
+Interface `DIContainerInterface` points to the implementation `DIContainerNative`. The interface is defined as follows:
 ```php
 <?php
 interface DIContainerInterface {
@@ -63,7 +63,7 @@ interface DIContainerInterface {
 }
 ```
 If a `DIContainerInterface` is requested, `$this` will be returned by the container by default.
-The implementation of the `DIContainer` itself can be overwritten as well by pointing the interface to a new class.
+The implementation of `DIContainerNative` itself can be overwritten as well by pointing the interface to a new class.
 
 ## License
 

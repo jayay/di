@@ -81,7 +81,7 @@ $classesToBeBuilt = [
 ];
 
 foreach ($classesToBeBuilt as $class) {
-    $di = new DIContainer();
+    $di = new DIContainerNative();
     try {
         var_dump($di->get($class));
         echo "DIException expected\n";

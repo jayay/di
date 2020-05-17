@@ -1,6 +1,6 @@
 <?php
 
-class DIContainer implements DIContainerInterface
+class DIContainerNative implements DIContainerInterface
 {
     public function get(string $className) {}
     public function withInstances(array $instances) : DIContainerInterface {}

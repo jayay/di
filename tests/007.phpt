@@ -1,5 +1,5 @@
 --TEST--
-DIContainer class expansion
+DIContainerNative class expansion
 --SKIPIF--
 <?php
 if (!extension_loaded('di')) {
@@ -11,7 +11,7 @@ if (!extension_loaded('di')) {
 
 class A {}
 
-$di = new \DIContainer;
+$di = new \DIContainerNative;
 
 try {
     $di->get(NonExistant::class);

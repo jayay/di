@@ -14,9 +14,9 @@ extern zend_module_entry di_module_entry;
 ZEND_TSRMLS_CACHE_EXTERN()
 # endif
 
-PHP_METHOD(DIContainer,	__construct);
-PHP_METHOD(DIContainer, get);
-PHP_METHOD(DIContainer, withInstances);
+PHP_METHOD(DIContainerNative,	__construct);
+PHP_METHOD(DIContainerNative, get);
+PHP_METHOD(DIContainerNative, withInstances);
 
 typedef struct _php_di_obj php_di_obj;
 

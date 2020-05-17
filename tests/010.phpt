@@ -1,5 +1,5 @@
 --TEST--
-Injection of DIContainer
+Injection of DIContainerNative
 --SKIPIF--
 <?php
 if (!extension_loaded('di')) {
@@ -12,7 +12,7 @@ if (!extension_loaded('di')) {
 class C {
     private $_diContainer;
 
-    public function __construct(DIContainer $di) {
+    public function __construct(DIContainerNative $di) {
         $this->_diContainer = $di;
     }
 }
@@ -25,27 +25,27 @@ class D {
     }
 }
 
-$di = new DIContainer;
+$di = new DIContainerNative;
 $di2 = $di->withClassMap([I::class => C::class]);
 
-var_dump($di->get(DIContainer::class));
+var_dump($di->get(DIContainerNative::class));
 var_dump($di->get(DIContainerInterface::class));
 var_dump($di2->get(C::class));
 var_dump($di2->get(D::class));
 
 ?>
 --EXPECT--
-object(DIContainer)#1 (0) {
+object(DIContainerNative)#1 (0) {
 }
-object(DIContainer)#1 (0) {
+object(DIContainerNative)#1 (0) {
 }
 object(C)#3 (1) {
   ["_diContainer":"C":private]=>
-  object(DIContainer)#1 (0) {
+  object(DIContainerNative)#1 (0) {
   }
 }
 object(D)#4 (1) {
   ["_diContainer":"D":private]=>
-  object(DIContainer)#1 (0) {
+  object(DIContainerNative)#1 (0) {
   }
 }

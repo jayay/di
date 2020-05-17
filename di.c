@@ -60,7 +60,7 @@ static HashTable *get_default_entries_classmap()
     zend_hash_init(ht, 1, NULL, ZVAL_PTR_DTOR, 0);
     zval nameContainerZval;
     zend_string *nameContainerInterface;
-    ZVAL_NEW_STR(&nameContainerZval, zend_string_init("DIContainer", strlen("DIContainer"), 0));
+    ZVAL_NEW_STR(&nameContainerZval, zend_string_init("DIContainerNative", strlen("DIContainerNative"), 0));
     nameContainerInterface = zend_string_init("DIContainerInterface", strlen("DIContainerInterface"), 0);
     zend_hash_add(ht, nameContainerInterface, &nameContainerZval);
     zend_string_release(nameContainerInterface);
@@ -73,12 +73,12 @@ static HashTable *get_default_entries_instances(zval *this_ptr)
     HashTable *ht;
     ALLOC_HASHTABLE(ht);
     zend_hash_init(ht, 1, NULL, ZVAL_PTR_DTOR, 0);
-    Z_STR(nameContainerZval) = zend_string_init("DIContainer", strlen("DIContainer"), 0);
+    Z_STR(nameContainerZval) = zend_string_init("DIContainerNative", strlen("DIContainerNative"), 0);
     zend_hash_add(ht, Z_STR(nameContainerZval), this_ptr);
     return ht;
 }
 
-PHP_METHOD(DIContainer, __construct)
+PHP_METHOD(DIContainerNative, __construct)
 {
     php_di_obj *php_di_obj;
     php_di_obj = Z_PHPDI_P(getThis());
@@ -87,7 +87,7 @@ PHP_METHOD(DIContainer, __construct)
     php_di_obj->instances = get_default_entries_instances(getThis());
 }
 
-PHP_METHOD(DIContainer, get)
+PHP_METHOD(DIContainerNative, get)
 {
     zend_string* cf;
     int status;
@@ -325,12 +325,12 @@ static zend_class_entry* find_class_entry_by_mapping_name(zend_string *class_nam
 }
 
 
-PHP_METHOD(DIContainer, withInstances)
+PHP_METHOD(DIContainerNative, withInstances)
 {
 
 }
 
-PHP_METHOD(DIContainer, withClassMap)
+PHP_METHOD(DIContainerNative, withClassMap)
 {
     php_di_obj *new_obj;
     HashTable *classmap, *default_classmap, *default_instances;
@@ -352,10 +352,10 @@ PHP_METHOD(DIContainer, withClassMap)
 }
 
 static const zend_function_entry di_container_impl[] = {
-    PHP_ME(DIContainer,	__construct, arginfo_di_container_method_construct, ZEND_ACC_PUBLIC)
-    PHP_ME(DIContainer, get, arginfo_di_method_get, ZEND_ACC_PUBLIC)
-    PHP_ME(DIContainer, withInstances, arginfo_di_method_withInstances, ZEND_ACC_PUBLIC)
-    PHP_ME(DIContainer, withClassMap, arginfo_di_method_withClassMap, ZEND_ACC_PUBLIC)
+    PHP_ME(DIContainerNative,	__construct, arginfo_di_container_method_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(DIContainerNative, get, arginfo_di_method_get, ZEND_ACC_PUBLIC)
+    PHP_ME(DIContainerNative, withInstances, arginfo_di_method_withInstances, ZEND_ACC_PUBLIC)
+    PHP_ME(DIContainerNative, withClassMap, arginfo_di_method_withClassMap, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
@@ -441,7 +441,7 @@ PHP_MINIT_FUNCTION(di)
     zend_class_entry ce_container, ce_interface, ce_di_exception;
 
     INIT_CLASS_ENTRY(ce_interface, "DIContainerInterface", di_container_interface);
-    INIT_CLASS_ENTRY(ce_container, "DIContainer", di_container_impl);
+    INIT_CLASS_ENTRY(ce_container, "DIContainerNative", di_container_impl);
     INIT_CLASS_ENTRY(ce_di_exception, "DIException", NULL);
 
     di_ce_interface = zend_register_internal_interface(&ce_interface);

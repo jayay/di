@@ -1,5 +1,5 @@
 --TEST--
-Userland implementation of DIContainer
+Userland implementation of DIContainerNative
 --SKIPIF--
 <?php
 if (!extension_loaded('di')) {
@@ -11,7 +11,7 @@ if (!extension_loaded('di')) {
 
 interface Injectable {}
 
-class UserLandDIContainer extends DIContainer implements Injectable {
+class UserLandDIContainer extends DIContainerNative implements Injectable {
     public function get(string $classname) : Injectable {
         echo "get called with $classname\n";
         return parent::get($classname);
@@ -36,9 +36,9 @@ class D implements Injectable {
     }
 }
 
-$di = (new DIContainer)->withClassMap([DIContainer::class => UserLandDIContainer::class]);
+$di = (new DIContainerNative)->withClassMap([DIContainerNative::class => UserLandDIContainer::class]);
 
-var_dump($di->get(DIContainer::class));
+var_dump($di->get(DIContainerNative::class));
 var_dump($di->get(DIContainerInterface::class));
 var_dump($di->get(C::class));
 $di->get(C::class)->action();

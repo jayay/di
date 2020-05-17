@@ -1,5 +1,5 @@
 --TEST--
-DIContainer declaration and instantiation
+DIContainerNative declaration and instantiation
 --SKIPIF--
 <?php
 if (!extension_loaded('di')) {
@@ -8,19 +8,19 @@ if (!extension_loaded('di')) {
 ?>
 --FILE--
 <?php
-echo strval(new ReflectionClass(\DIContainer::class));
+echo strval(new ReflectionClass(\DIContainerNative::class));
 
-$di = new \DIContainer;
+$di = new \DIContainerNative;
 
 var_dump($di);
-var_dump($di instanceof \DIContainer);
+var_dump($di instanceof \DIContainerNative);
 var_dump($di instanceof \DIContainerInterface);
 
-$di2 = new \DIContainer;
+$di2 = new \DIContainerNative;
 var_dump($di2);
 ?>
 --EXPECT--
-Class [ <internal:di> class DIContainer implements DIContainerInterface ] {
+Class [ <internal:di> class DIContainerNative implements DIContainerInterface ] {
 
   - Constants [0] {
   }
@@ -63,9 +63,9 @@ Class [ <internal:di> class DIContainer implements DIContainerInterface ] {
     }
   }
 }
-object(DIContainer)#1 (0) {
+object(DIContainerNative)#1 (0) {
 }
 bool(true)
 bool(true)
-object(DIContainer)#2 (0) {
+object(DIContainerNative)#2 (0) {
 }
