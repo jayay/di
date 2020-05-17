@@ -65,6 +65,14 @@ interface DIContainer {
 If a `DIContainer` is requested, `$this` will be returned by the container by default.
 The implementation of `DIContainerNative` itself can be overwritten as well by pointing the interface to a new class.
 
+## What can be injected?
+
+Only dependencies that resolve to classes will be injected. The dependencies,
+as well, can only have dependencies that are resolvable classes as dependencies.
+
+Only the constructor gets taken into account for analysis.
+Scalar types cannot be resolved and would lead to a `DIException`.
+
 ## License
 
 DI was published under The PHP License, version 3.01. See [LICENSE document](LICENSE.txt).
