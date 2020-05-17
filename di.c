@@ -92,12 +92,11 @@ PHP_METHOD(DIContainer, get)
     int status;
 
     ZEND_PARSE_PARAMETERS_START(1,1)
-            Z_PARAM_STR(cf)
+        Z_PARAM_STR(cf)
     ZEND_PARSE_PARAMETERS_END();
 
 
-    status = resolve_build_dependencies(cf,
-                                        100, getThis(), return_value);
+    status = resolve_build_dependencies(cf, 100, getThis(), return_value);
 
     if (status != SUCCESS) {
         RETURN_LONG(status);
@@ -223,8 +222,8 @@ static int build_instance(zend_class_entry *ce, zval *this_ptr, zval *new_obj)
 
     for (i = 0; i < num_args; i++) {
         dependency_str = find_class_name_by_mapping_name(
-                ZEND_TYPE_NAME(ce->constructor->internal_function.arg_info[i].type),
-                this_ptr);
+            ZEND_TYPE_NAME(ce->constructor->internal_function.arg_info[i].type),
+            this_ptr);
         zval *zval_result;
 
         if ((zval_result = zend_hash_find(php_di_obj->instances, dependency_str)) == NULL) {
@@ -315,7 +314,7 @@ PHP_METHOD(DIContainer, withClassMap)
     new_obj = Z_PHPDI_P(return_value);
 
     ZEND_PARSE_PARAMETERS_START(1,1)
-            Z_PARAM_ARRAY_HT((classmap))
+        Z_PARAM_ARRAY_HT((classmap))
     ZEND_PARSE_PARAMETERS_END();
 
 
@@ -328,10 +327,10 @@ PHP_METHOD(DIContainer, withClassMap)
 }
 
 static const zend_function_entry di_container_impl[] = {
-    PHP_ME(DIContainer,			__construct,		arginfo_di_container_method_construct, ZEND_ACC_PUBLIC)
-    PHP_ME(DIContainer, get,	arginfo_di_method_get, ZEND_ACC_PUBLIC)
-    PHP_ME(DIContainer, withInstances,	arginfo_di_method_withInstances, ZEND_ACC_PUBLIC)
-    PHP_ME(DIContainer, withClassMap,	arginfo_di_method_withClassMap, ZEND_ACC_PUBLIC)
+    PHP_ME(DIContainer,	__construct, arginfo_di_container_method_construct, ZEND_ACC_PUBLIC)
+    PHP_ME(DIContainer, get, arginfo_di_method_get, ZEND_ACC_PUBLIC)
+    PHP_ME(DIContainer, withInstances, arginfo_di_method_withInstances, ZEND_ACC_PUBLIC)
+    PHP_ME(DIContainer, withClassMap, arginfo_di_method_withClassMap, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
@@ -355,8 +354,8 @@ PHP_FUNCTION(di_test2)
     zend_string *retval;
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
-            Z_PARAM_OPTIONAL
-            Z_PARAM_STRING(var, var_len)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_STRING(var, var_len)
     ZEND_PARSE_PARAMETERS_END();
 
     retval = strpprintf(0, "Hello %s", var);
