@@ -1,5 +1,5 @@
 --TEST--
-DIContainerInterface registration
+DIContainer registration
 --SKIPIF--
 <?php
 if (!extension_loaded('di')) {
@@ -8,7 +8,7 @@ if (!extension_loaded('di')) {
 ?>
 --FILE--
 <?php
-var_dump(interface_exists(\DIContainerInterface::class));
+var_dump(interface_exists(\DIContainer::class));
 ?>
 --EXPECT--
 bool(true)

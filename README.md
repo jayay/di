@@ -53,16 +53,16 @@ $di = (new DIContainerNative)
 ```
 
 As soon as a new `DIContainerNative` gets instantiated, one default entry in the class mapping gets created:
-Interface `DIContainerInterface` points to the implementation `DIContainerNative`. The interface is defined as follows:
+Interface `DIContainer` points to the implementation `DIContainerNative`. The interface is defined as follows:
 ```php
 <?php
-interface DIContainerInterface {
+interface DIContainer {
     public function get(string $className);
-    public function withInstances(array $instances) : DIContainerInterface;
-    public function withClassMap(array $mapping) : DIContainerInterface;
+    public function withInstances(array $instances) : DIContainer;
+    public function withClassMap(array $mapping) : DIContainer;
 }
 ```
-If a `DIContainerInterface` is requested, `$this` will be returned by the container by default.
+If a `DIContainer` is requested, `$this` will be returned by the container by default.
 The implementation of `DIContainerNative` itself can be overwritten as well by pointing the interface to a new class.
 
 ## License

@@ -20,7 +20,7 @@ class C {
 class D {
     private $_diContainer;
 
-    public function __construct(DIContainerInterface $di) {
+    public function __construct(DIContainer $di) {
         $this->_diContainer = $di;
     }
 }
@@ -29,7 +29,7 @@ $di = new DIContainerNative;
 $di2 = $di->withClassMap([I::class => C::class]);
 
 var_dump($di->get(DIContainerNative::class));
-var_dump($di->get(DIContainerInterface::class));
+var_dump($di->get(DIContainer::class));
 var_dump($di2->get(C::class));
 var_dump($di2->get(D::class));
 

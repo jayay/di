@@ -21,7 +21,7 @@ class UserLandDIContainer extends DIContainerNative implements Injectable {
 class C implements Injectable {
     private $_diContainer;
 
-    public function __construct(DIContainerInterface $di) {
+    public function __construct(DIContainer $di) {
         $this->_diContainer = $di;
     }
 
@@ -39,7 +39,7 @@ class D implements Injectable {
 $di = (new DIContainerNative)->withClassMap([DIContainerNative::class => UserLandDIContainer::class]);
 
 var_dump($di->get(DIContainerNative::class));
-var_dump($di->get(DIContainerInterface::class));
+var_dump($di->get(DIContainer::class));
 var_dump($di->get(C::class));
 $di->get(C::class)->action();
 ?>

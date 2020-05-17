@@ -1,16 +1,16 @@
 <?php
 
-class DIContainerNative implements DIContainerInterface
+class DIContainerNative implements DIContainer
 {
     public function get(string $className) {}
-    public function withInstances(array $instances) : DIContainerInterface {}
-    public function withClassMap(array $mapping) : DIContainerInterface {}
+    public function withInstances(array $instances) : DIContainer {}
+    public function withClassMap(array $mapping) : DIContainer {}
 }
 
-interface DIContainerInterface {
+interface DIContainer {
     public function get(string $className);
-    public function withInstances(array $instances) : DIContainerInterface;
-    public function withClassMap(array $mapping) : DIContainerInterface;
+    public function withInstances(array $instances) : DIContainer;
+    public function withClassMap(array $mapping) : DIContainer;
 }
 
 class DIException extends Exception {}

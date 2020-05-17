@@ -1,5 +1,5 @@
 --TEST--
-DIContainerInterface implementation
+DIContainer implementation
 --SKIPIF--
 <?php
 if (!extension_loaded('di')) {
@@ -8,20 +8,20 @@ if (!extension_loaded('di')) {
 ?>
 --FILE--
 <?php
-class A implements \DIContainerInterface
+class A implements \DIContainer
 {
     public function get(string $className) {}
-    public function withInstances(array $instances) : DIContainerInterface {}
-    public function withClassMap(array $mapping) : DIContainerInterface {}
+    public function withInstances(array $instances) : DIContainer {}
+    public function withClassMap(array $mapping) : DIContainer {}
 }
 
-echo strval(new ReflectionClass(\DIContainerInterface::class));
+echo strval(new ReflectionClass(\DIContainer::class));
 $a = new A;
-var_dump($a instanceof \DIContainerInterface);
+var_dump($a instanceof \DIContainer);
 var_dump(get_class($a));
 ?>
 --EXPECT--
-Interface [ <internal:di> interface DIContainerInterface ] {
+Interface [ <internal:di> interface DIContainer ] {
 
   - Constants [0] {
   }

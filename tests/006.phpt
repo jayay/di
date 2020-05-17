@@ -14,13 +14,13 @@ $di = new \DIContainerNative;
 
 var_dump($di);
 var_dump($di instanceof \DIContainerNative);
-var_dump($di instanceof \DIContainerInterface);
+var_dump($di instanceof \DIContainer);
 
 $di2 = new \DIContainerNative;
 var_dump($di2);
 ?>
 --EXPECT--
-Class [ <internal:di> class DIContainerNative implements DIContainerInterface ] {
+Class [ <internal:di> class DIContainerNative implements DIContainer ] {
 
   - Constants [0] {
   }
@@ -41,21 +41,21 @@ Class [ <internal:di> class DIContainerNative implements DIContainerInterface ] 
       }
     }
 
-    Method [ <internal:di, prototype DIContainerInterface> public method get ] {
+    Method [ <internal:di, prototype DIContainer> public method get ] {
 
       - Parameters [1] {
         Parameter #0 [ <required> string $class_name ]
       }
     }
 
-    Method [ <internal:di, prototype DIContainerInterface> public method withInstances ] {
+    Method [ <internal:di, prototype DIContainer> public method withInstances ] {
 
       - Parameters [1] {
         Parameter #0 [ <required> array $instances ]
       }
     }
 
-    Method [ <internal:di, prototype DIContainerInterface> public method withClassMap ] {
+    Method [ <internal:di, prototype DIContainer> public method withClassMap ] {
 
       - Parameters [1] {
         Parameter #0 [ <required> array $classmap ]
