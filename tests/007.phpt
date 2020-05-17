@@ -12,11 +12,19 @@ if (!extension_loaded('di')) {
 class A {}
 
 $di = new \DIContainer;
-var_dump($di->get(NonExistant::class));
+
+try {
+    $di->get(NonExistant::class);
+    echo "DIException expected";
+} catch (DIException $ex) {
+    var_dump($ex->getCode());
+    var_dump($ex->getMessage());
+}
 var_dump($di->get(A::class));
 
 ?>
 --EXPECT--
-int(-20)
-object(A)#2 (0) {
+int(0)
+string(32) "Class NonExistant does not exist"
+object(A)#3 (0) {
 }

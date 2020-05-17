@@ -7,6 +7,7 @@
 #include "php.h"
 #include "ext/standard/info.h"
 #include "zend_interfaces.h"
+#include "zend_exceptions.h"
 #include "php_di.h"
 
 #include "zend.h"
@@ -26,7 +27,7 @@ static zend_string *find_class_name_by_mapping_name(zend_string *class_name, zva
 static int resolve_build_dependencies(zend_string* class, uint32_t nesting_limit, zval *this_ptr, zval* retval);
 static int build_instance(zend_class_entry *ce, zval *this_ptr, zval *new_obj);
 
-zend_class_entry *di_ce_interface, *di_ce_container;
+zend_class_entry *di_ce_interface, *di_ce_container, *di_ce_exception;
 
 static zend_object_handlers di_object_handlers_di_container;
 
@@ -99,11 +100,11 @@ PHP_METHOD(DIContainer, get)
     status = resolve_build_dependencies(cf, 100, getThis(), return_value);
 
     if (status != SUCCESS) {
-        RETURN_LONG(status);
+        RETURN_NULL();
     }
 
     if (return_value == NULL) {
-        RETURN_LONG(-11111);
+        RETURN_NULL();
     }
 }
 
@@ -121,28 +122,34 @@ static int resolve_build_dependencies(
     int build_result, sub_result;
 
     if (nesting_limit == 0) {
-        return -3;
+        return FAILURE;
     }
 
     if ((ce = find_class_entry_by_mapping_name(class, this_ptr)) == NULL) {
-        return -20;
-        //zend_throw_exception_ex(reflection_exception_ptr, 0,
-        //		"Class %s does not exist", ZSTR_VAL(name));
-        //zend_string_release(name); // do again after throw
-        //RETURN_THROWS();
+        zend_throw_exception_ex(di_ce_exception, 0,
+            "Class %s does not exist", ZSTR_VAL(class));
+        zend_string_release(class);
+        return FAILURE;
     }
 
     if (ce->constructor) {
         if (ce->constructor->common.fn_flags & ZEND_ACC_ABSTRACT) {
-            // throw exception (method is abstract)
-            return 2;
+            zend_throw_exception_ex(di_ce_exception, 0,
+                "Constructor of %s must not be abstract", ZSTR_VAL(ce->name));
+            return FAILURE;
         }
 
         if (!(ce->constructor->common.fn_flags & ZEND_ACC_PUBLIC)) {
-            // throw exception (constructor is private)
-            return 3;
+            zend_throw_exception_ex(di_ce_exception, 0,
+                "Constructor of %s is not public", ZSTR_VAL(ce->name));
+            return FAILURE;
         }
 
+        if (ce->constructor->common.fn_flags & ZEND_ACC_VARIADIC) {
+            zend_throw_exception_ex(di_ce_exception, 0,
+                "Variadic constructors are not allowed (class %s)", ZSTR_VAL(ce->name));
+            return FAILURE;
+        }
     }
 
     php_di_obj = Z_PHPDI_P(this_ptr);
@@ -160,20 +167,25 @@ static int resolve_build_dependencies(
             type = ce->constructor->internal_function.arg_info[i].type;
 #if PHP_MAJOR_VERSION < 8
             if (!ZEND_TYPE_IS_CLASS(type)) {
-                return -1;
-            }
+#else
+            if (!MAY_BE_CLASS(type)) {
 #endif
+                zend_throw_exception_ex(di_ce_exception, 0,
+                    "Argument %d of class %s is not a class or interface", i + 1, ZSTR_VAL(ce->name));
+                return FAILURE;
+            }
 
             if ((sub_entry = find_class_entry_by_mapping_name(ZEND_TYPE_NAME(type), this_ptr)) == NULL) {
-                return -2;
+                zend_throw_exception_ex(di_ce_exception, 0,
+                    "Failed autoloading class %s", ZSTR_VAL(ZEND_TYPE_NAME(type)));
+                return FAILURE;
             }
 
-            find_res = zend_hash_find(php_di_obj->instances, sub_entry->name);
-            if (find_res == NULL) {
+            if ((find_res = zend_hash_find(php_di_obj->instances, sub_entry->name)) == NULL) {
                 zend_hash_add_empty_element(php_di_obj->instances, sub_entry->name);
 
                 if ((sub_result = resolve_build_dependencies(
-                        sub_entry->name, nesting_limit - 1, this_ptr, &tmp)) < 0) {
+                        sub_entry->name, nesting_limit - 1, this_ptr, &tmp)) != SUCCESS) {
                     return sub_result;
                 }
             }
@@ -181,7 +193,10 @@ static int resolve_build_dependencies(
     }
 
     if (UNEXPECTED(object_init_ex(&retval_o, ce) != SUCCESS)) {
-        return -4;
+        zend_throw_exception_ex(di_ce_exception, 0,
+            "Construction of object of class %s failed", ZSTR_VAL(ce->name));
+        zend_string_release(class);
+        return FAILURE;
     }
 
     build_result = SUCCESS;
@@ -189,7 +204,9 @@ static int resolve_build_dependencies(
     if (ce->constructor) {
         if (!(ce->constructor->internal_function.fn_flags & ZEND_ACC_PUBLIC)) {
             zval_ptr_dtor(&retval_o);
-            return -9;
+            zend_throw_exception_ex(di_ce_exception, 0,
+                "Constructor of %s is not public", ZSTR_VAL(ce->name));
+            return FAILURE;
         }
         build_result = build_instance(ce, this_ptr, &retval_o);
     }
@@ -221,13 +238,21 @@ static int build_instance(zend_class_entry *ce, zval *this_ptr, zval *new_obj)
     php_di_obj = Z_PHPDI_P(this_ptr);
 
     for (i = 0; i < num_args; i++) {
+        if (ce->constructor->internal_function.arg_info == NULL) {
+            zend_throw_exception_ex(di_ce_exception, 0,
+                "Dependency %d of %s is not a class", i, ZSTR_VAL(ce->name));
+            return FAILURE;
+        }
         dependency_str = find_class_name_by_mapping_name(
             ZEND_TYPE_NAME(ce->constructor->internal_function.arg_info[i].type),
             this_ptr);
         zval *zval_result;
 
         if ((zval_result = zend_hash_find(php_di_obj->instances, dependency_str)) == NULL) {
-            return -12;
+            zend_throw_exception_ex(di_ce_exception, 0,
+                "Dependency %s of %s was not resolved", ZSTR_VAL(dependency_str), ZSTR_VAL(ce->name));
+            zend_string_release(dependency_str);
+            return FAILURE;
         }
         ZVAL_COPY(&(params[i]), zval_result);
         Z_TRY_ADDREF(params[i]);
@@ -261,7 +286,7 @@ static int build_instance(zend_class_entry *ce, zval *this_ptr, zval *new_obj)
         zval_ptr_dtor(&retval);
         php_error_docref(NULL, E_WARNING, "Invocation of %s's constructor failed", ZSTR_VAL(ce->name));
         zval_ptr_dtor(new_obj);
-        return -1;
+        return FAILURE;
     }
 
     return SUCCESS;
@@ -413,13 +438,15 @@ static zend_object *di_object_clone_di(zend_object *this_ptr) /* {{{ */
  */
 PHP_MINIT_FUNCTION(di)
 {
-    zend_class_entry ce_container, ce_interface;
+    zend_class_entry ce_container, ce_interface, ce_di_exception;
 
     INIT_CLASS_ENTRY(ce_interface, "DIContainerInterface", di_container_interface);
     INIT_CLASS_ENTRY(ce_container, "DIContainer", di_container_impl);
+    INIT_CLASS_ENTRY(ce_di_exception, "DIException", NULL);
 
     di_ce_interface = zend_register_internal_interface(&ce_interface);
     di_ce_container = zend_register_internal_class(&ce_container);
+    di_ce_exception = zend_register_internal_class_ex(&ce_di_exception, zend_ce_exception);
     zend_class_implements(di_ce_container, 1, di_ce_interface);
     di_ce_container->create_object = di_object_new_di;
     memcpy(&di_object_handlers_di_container, &std_object_handlers, sizeof(zend_object_handlers));
