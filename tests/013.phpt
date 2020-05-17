@@ -6,6 +6,8 @@ if (!extension_loaded('di')) {
 	echo 'skip';
 }
 ?>
+--INI--
+error_reporting=32639
 --FILE--
 <?php
 
@@ -89,11 +91,11 @@ foreach ($classesToBeBuilt as $class) {
 }
 
 ?>
---EXPECT--
+--EXPECTF--
 string(33) "A: Constructor of A is not public"
 string(39) "B: Failed autoloading class Nonexistant"
 string(40) "C: Constructor of C must not be abstract"
-string(43) "I: Construction of object of class I failed"
+string(%d) "I: %s"
 string(43) "D: Construction of object of class D failed"
 string(23) ": Class  does not exist"
 string(52) "E: Argument 1 of class E is not a class or interface"
