@@ -168,7 +168,7 @@ static int resolve_build_dependencies(
 #if PHP_MAJOR_VERSION < 8
             if (!ZEND_TYPE_IS_CLASS(type)) {
 #else
-            if (!(type & MAY_BE_CLASS)) {
+            if (!(type.type_mask & MAY_BE_CLASS)) {
 #endif
                 zend_throw_exception_ex(di_ce_exception, 0,
                     "Argument %d of class %s is not a class or interface", i + 1, ZSTR_VAL(ce->name));
