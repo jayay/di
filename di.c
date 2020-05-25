@@ -344,7 +344,7 @@ PHP_METHOD(DIContainerNative, withClassMap)
 
 
     default_classmap = get_default_entries_classmap();
-    default_instances = get_default_entries_instances(getThis());
+    default_instances = get_default_entries_instances(return_value);
 
     zend_hash_merge(default_classmap, classmap, zval_add_ref, 1);
     new_obj->classmap = default_classmap;
