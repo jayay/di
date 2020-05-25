@@ -41,11 +41,11 @@ object(DIContainerNative)#1 (0) {
 }
 object(C)#3 (1) {
   ["_diContainer":"C":private]=>
-  object(DIContainerNative)#1 (0) {
+  object(DIContainerNative)#2 (0) {
   }
 }
 object(D)#4 (1) {
   ["_diContainer":"D":private]=>
-  object(DIContainerNative)#1 (0) {
+  object(DIContainerNative)#2 (0) {
   }
 }
