@@ -27,4 +27,4 @@ jobs:
     - name: make
       run: make
     - name: test
-      run: php -n -d extension_dir=modules/ -d extension=di.so run-tests.php -P .
+      run: php run-tests.php -P . -n -d extension_dir=modules/ -d extension=di.so
