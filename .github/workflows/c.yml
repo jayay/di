@@ -26,7 +26,5 @@ jobs:
       run: ./configure --enable-di
     - name: make
       run: make
-    - name: make install
-      run: make install
     - name: test
-      run: php run-tests.php -P .
+      run: php -n -d extension_dir=modules/ run-tests.php -P .
