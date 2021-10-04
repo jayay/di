@@ -168,7 +168,7 @@ static int resolve_build_dependencies(
 #if PHP_MAJOR_VERSION < 8
             if (!ZEND_TYPE_IS_CLASS(type)) {
 #else
-            if (!(type.type_mask & MAY_BE_CLASS)) {
+            if ((type.type_mask & MAY_BE_CLASS) == 0 && !ZEND_TYPE_HAS_CLASS(type)) {
 #endif
                 zend_throw_exception_ex(di_ce_exception, 0,
                     "Argument %d of class %s is not a class or interface", i + 1, ZSTR_VAL(ce->name));
@@ -264,7 +264,10 @@ static int build_instance(zend_class_entry *ce, zval *this_ptr, zval *new_obj)
     fci.retval = &retval;
     fci.param_count = num_args;
     fci.params = params;
+
+#if PHP_MAJOR_VERSION < 8
     fci.no_separation = 1;
+#endif
 
     fcc.function_handler = ce->constructor;
     fcc.called_scope = Z_OBJCE_P(new_obj);
